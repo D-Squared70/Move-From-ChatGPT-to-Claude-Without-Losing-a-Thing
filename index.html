@@ -1,0 +1,638 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Rent the Model, Own Your Setup</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Anonymous+Pro:ital,wght@0,400;0,700;1,400&family=Golos+Text:wght@400;500;600;700&family=Piazzolla:ital,opsz,wght@0,8..30,500;0,8..30,600;0,8..30,700;1,8..30,500;1,8..30,600&display=swap" rel="stylesheet">
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+:root{
+  --bg:#0B0D11; --ink:#ECEEF3; --soft:#AEB4BF; --dim:#787F8B;
+  --rent:#767E8A; --line:rgba(236,238,243,.12); --panel:rgba(255,255,255,.022);
+  --accent:#E2553F;
+  --serif:'Piazzolla',Georgia,'Times New Roman',serif;
+  --sans:'Golos Text',system-ui,sans-serif;
+  --mono:'Anonymous Pro',ui-monospace,monospace;
+}
+html,body{height:100%;background:#06070A;overflow:hidden}
+body{font-family:var(--sans);color:var(--ink)}
+
+#stage{position:absolute;top:50%;left:50%;height:720px;transform-origin:center center;
+  background:var(--bg);overflow:hidden}
+#stage::before{content:'';position:absolute;inset:0;pointer-events:none;
+  background:radial-gradient(130% 90% at 50% -16%, rgba(255,255,255,.04), transparent 58%)}
+#stage::after{content:'';position:absolute;inset:0;pointer-events:none;
+  background:radial-gradient(120% 70% at 86% 118%, color-mix(in srgb,var(--accent) 9%,transparent), transparent 60%);
+  transition:background .6s ease}
+
+.counter{position:absolute;top:34px;right:48px;z-index:6;
+  font-family:var(--mono);font-size:13px;letter-spacing:.18em;color:var(--dim)}
+.counter b{color:var(--accent);font-weight:700;transition:color .5s}
+
+.rail{position:absolute;left:52px;top:50%;transform:translateY(-50%);width:172px;z-index:6}
+.rail .cap{font-family:var(--mono);font-size:10px;letter-spacing:.34em;color:var(--dim);
+  margin-bottom:24px;padding-left:2px}
+.rail ul{list-style:none}
+.rail li{display:flex;align-items:center;gap:13px;height:31px;cursor:pointer;
+  font-family:var(--sans);font-size:12.5px;font-weight:500;letter-spacing:.01em;
+  color:var(--dim);transition:color .4s ease, opacity .4s ease}
+.rail li .mk{flex:0 0 auto;width:16px;height:10px;border-radius:3px;
+  border:1.4px solid var(--dim);background:transparent;transition:all .42s ease}
+.rail li.done{color:var(--soft)}
+.rail li.done .mk{background:var(--soft);border-color:var(--soft);opacity:.4}
+.rail li.on{color:var(--ink)}
+.rail li.on .mk{width:24px;background:var(--accent);border-color:var(--accent);
+  box-shadow:0 0 0 4px color-mix(in srgb,var(--accent) 20%,transparent),
+             0 0 14px color-mix(in srgb,var(--accent) 55%,transparent)}
+.rail li::after{content:attr(data-n);margin-left:auto;font-family:var(--mono);
+  font-size:10px;letter-spacing:.1em;color:var(--dim);opacity:.5}
+.rail li.on::after{color:var(--accent);opacity:.9}
+
+.slide{position:absolute;inset:0;opacity:0;visibility:hidden;
+  transition:opacity .55s ease, visibility .55s}
+.slide.on{opacity:1;visibility:visible}
+.wrap{position:absolute;inset:0;padding:56px 86px 58px 256px;display:flex;flex-direction:column}
+.head{flex:0 0 auto}
+.kick{font-family:var(--mono);font-size:12.5px;letter-spacing:.26em;text-transform:uppercase;
+  color:var(--accent);transition:color .5s;margin-bottom:18px}
+h1{font-family:var(--serif);font-weight:600;font-size:54px;line-height:1.08;
+  letter-spacing:-.012em;color:var(--ink);max-width:18em;font-optical-sizing:auto}
+h1 em{font-style:italic;font-weight:600;color:var(--accent);transition:color .5s}
+h1.big{font-size:64px}
+.sub{margin-top:18px;font-family:var(--mono);font-size:14.5px;letter-spacing:.02em;
+  color:var(--soft);font-weight:400}
+.sub em{color:var(--accent);font-style:normal}
+
+.viz{flex:1;display:flex;align-items:center;justify-content:center;min-height:0;margin-top:6px}
+.diagram{width:100%;max-width:1080px}
+.diagram>svg{width:100%;height:auto;display:block;overflow:visible}
+
+.fade{opacity:0;transition:opacity .55s ease, transform .55s ease}
+.fade.in{opacity:1}
+.up{transform:translateY(14px)}
+.up.in{transform:none}
+
+svg text{font-family:var(--sans);fill:var(--ink)}
+.t-mono{font-family:var(--mono)}
+.t-dim{fill:var(--dim)} .t-soft{fill:var(--soft)} .t-acc{fill:var(--accent)} .t-rent{fill:var(--rent)} .t-ink{fill:var(--ink)}
+.con{fill:none;stroke:var(--accent);stroke-width:2.4;stroke-linecap:round;stroke-linejoin:round}
+.con-d{fill:none;stroke:var(--rent);stroke-width:1.9;stroke-dasharray:7 7;stroke-linecap:round}
+.arr{fill:none;stroke:var(--accent);stroke-width:2.4;stroke-linecap:round;stroke-linejoin:round}
+.feed{fill:none;stroke:var(--accent);stroke-width:2.2;stroke-linecap:round;opacity:.9}
+.arrhead{fill:none;stroke:var(--accent);stroke-width:2.4;stroke-linecap:round;stroke-linejoin:round}
+.hair{fill:none;stroke:var(--line);stroke-width:1.5}
+.box{fill:var(--panel);stroke:var(--line);stroke-width:1.5}
+.box-o{fill:color-mix(in srgb,var(--accent) 7%,transparent);stroke:var(--accent);stroke-width:1.8}
+.box-r{fill:none;stroke:var(--rent);stroke-width:1.7;stroke-dasharray:8 7}
+.gl{fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
+
+.prompt{font-family:var(--mono);font-size:19px;line-height:1.95;color:#D6DBE3;
+  background:linear-gradient(180deg, rgba(255,255,255,.028), rgba(255,255,255,.012));
+  border:1px solid var(--line);border-left:3px solid var(--accent);border-radius:14px;
+  padding:32px 38px;max-width:1010px}
+.prompt .v{color:var(--ink);font-weight:700;
+  background:color-mix(in srgb,var(--accent) 15%,transparent);
+  border:1px solid color-mix(in srgb,var(--accent) 52%,transparent);
+  border-radius:6px;padding:1px 9px;white-space:nowrap}
+.prompt .hl{color:#fff;background:color-mix(in srgb,var(--accent) 20%,transparent);
+  box-shadow:inset 0 -0.5em 0 color-mix(in srgb,var(--accent) 26%,transparent);
+  border-radius:3px;padding:0 3px}
+
+.col2{display:grid;grid-template-columns:0.78fr 1.22fr;gap:54px;align-items:center;width:100%;max-width:1060px}
+.filecard{display:flex;align-items:center;gap:16px;padding:18px 22px;border-radius:13px;
+  background:var(--panel);border:1px solid var(--line)}
+.filecard.own{border-color:color-mix(in srgb,var(--accent) 50%,transparent);
+  background:color-mix(in srgb,var(--accent) 6%,transparent);
+  box-shadow:0 18px 40px -30px var(--accent)}
+.filecard .ico{flex:0 0 auto;width:30px;height:30px;color:var(--accent)}
+.filecard .nm{font-size:20px;font-weight:600;color:var(--ink)}
+.chip{display:inline-flex;align-items:center;gap:9px;font-family:var(--mono);font-size:12.5px;
+  letter-spacing:.06em;color:var(--soft);border:1px solid var(--line);border-radius:999px;padding:8px 15px}
+.chip.acc{color:var(--ink);border-color:color-mix(in srgb,var(--accent) 55%,transparent);
+  background:color-mix(in srgb,var(--accent) 10%,transparent)}
+.tag-r{display:inline-block;font-family:var(--mono);font-size:10.5px;letter-spacing:.18em;
+  color:var(--rent);border:1px dashed var(--rent);border-radius:5px;padding:3px 8px}
+.logoplate{width:62px;height:62px;object-fit:contain;display:block}
+.note{font-family:var(--mono);font-size:12px;letter-spacing:.04em;color:var(--dim)}
+
+/* macro cards */
+.cards3{display:grid;grid-template-columns:repeat(3,1fr);gap:26px;width:100%;max-width:920px}
+.mcard{background:var(--panel);border:1px solid var(--line);border-radius:16px;
+  padding:36px 24px;display:flex;flex-direction:column;align-items:center;gap:20px;text-align:center}
+.mcard .ic{width:58px;height:58px;display:flex;align-items:center;justify-content:center;border-radius:50%;
+  color:var(--accent);background:color-mix(in srgb,var(--accent) 12%,transparent);
+  border:1px solid color-mix(in srgb,var(--accent) 40%,transparent)}
+.mcard .ic svg{width:28px;height:28px}
+.mcard .lb{font-size:21px;font-weight:600;color:var(--ink)}
+
+/* recap */
+.recap{display:flex;flex-direction:column;gap:22px;margin-top:34px;max-width:1010px}
+.rrow{display:flex;align-items:center;gap:18px}
+.rrow .ic{width:26px;height:26px;color:var(--accent);flex:0 0 auto}
+.rrow .tx{font-size:22px;color:var(--soft)}
+.rrow .tx b{color:var(--ink);font-weight:600}
+.rrow .tx em{color:var(--accent);font-style:normal;font-weight:600}
+</style>
+</head>
+<body>
+<div id="stage">
+
+  <svg width="0" height="0" style="position:absolute" aria-hidden="true"><defs>
+    <symbol id="key" viewBox="0 0 24 24"><circle cx="8" cy="9" r="4.3" class="gl"/><path class="gl" d="M11 12 L20 21 M17 18 l2.4 -2.4 M19.6 20.6 l2.2 -2.2"/></symbol>
+    <symbol id="lock" viewBox="0 0 24 24"><rect x="4.5" y="10.5" width="15" height="10" rx="2.2" class="gl"/><path class="gl" d="M8 10.5 V8 a4 4 0 0 1 8 0 v2.5"/><circle cx="12" cy="15.3" r="1.3" fill="currentColor" stroke="none"/></symbol>
+    <symbol id="folder" viewBox="0 0 24 24"><path class="gl" d="M3 7.5 a2 2 0 0 1 2 -2 h4.2 l2 2.2 H19 a2 2 0 0 1 2 2 V18 a2 2 0 0 1 -2 2 H5 a2 2 0 0 1 -2 -2 Z"/></symbol>
+    <symbol id="file" viewBox="0 0 24 24"><path class="gl" d="M6.5 3.5 h7.5 l4.5 4.5 V20 a1 1 0 0 1 -1 1 H6.5 a1 1 0 0 1 -1 -1 V4.5 a1 1 0 0 1 1 -1Z"/><path class="gl" d="M13.8 3.6 V8 h4.4"/></symbol>
+    <symbol id="monitor" viewBox="0 0 24 24"><rect x="3" y="4.5" width="18" height="12.5" rx="1.8" class="gl"/><path class="gl" d="M9.2 20.5 h5.6 M12 17 v3.5"/></symbol>
+    <symbol id="cloud" viewBox="0 0 24 24"><path class="gl" d="M7.5 18.5 h9.5 a4.2 4.2 0 0 0 .3 -8.4 a5.4 5.4 0 0 0 -10.2 -1.4 A3.8 3.8 0 0 0 7.5 18.5Z"/></symbol>
+    <symbol id="person" viewBox="0 0 24 24"><circle cx="12" cy="8" r="3.5" class="gl"/><path class="gl" d="M5.4 20.5 a6.6 6.6 0 0 1 13.2 0"/></symbol>
+    <symbol id="power" viewBox="0 0 24 24"><path class="gl" d="M12 3.5 V11.5"/><path class="gl" d="M6.7 7 a7.5 7.5 0 1 0 10.6 0"/></symbol>
+    <symbol id="sync" viewBox="0 0 24 24"><path class="gl" d="M4.5 10 a7.5 7.5 0 0 1 12.8 -3 M17.5 3.5 V7.2 H13.8"/><path class="gl" d="M19.5 14 a7.5 7.5 0 0 1 -12.8 3 M6.5 20.5 V16.8 H10.2"/></symbol>
+    <symbol id="check" viewBox="0 0 24 24"><path class="gl" d="M5 12.5 l4.5 4.5 L19 6.5"/></symbol>
+    <symbol id="gauge" viewBox="0 0 24 24"><path class="gl" d="M4 18 a8 8 0 0 1 16 0"/><path class="gl" d="M12 18 L16.5 10.5"/><circle cx="12" cy="18" r="1.4" fill="currentColor" stroke="none"/></symbol>
+  </defs></svg>
+
+  <div class="counter" id="counter"></div>
+
+  <nav class="rail" id="rail">
+    <div class="cap">CONTENTS</div>
+    <ul>
+      <li data-ch="0" data-n="01"><span class="mk"></span><span>The Risk</span></li>
+      <li data-ch="1" data-n="02"><span class="mk"></span><span>Rent vs Own</span></li>
+      <li data-ch="2" data-n="03"><span class="mk"></span><span>Where It Lives</span></li>
+      <li data-ch="3" data-n="04"><span class="mk"></span><span>Three Files</span></li>
+      <li data-ch="4" data-n="05"><span class="mk"></span><span>For Teams</span></li>
+      <li data-ch="5" data-n="06"><span class="mk"></span><span>Stay Free</span></li>
+    </ul>
+  </nav>
+
+  <!-- ===================== CH 1 — THE RISK ===================== -->
+
+  <!-- S1 : macro — the model keeps changing -->
+  <section class="slide" data-ch="0">
+    <div class="wrap">
+      <div class="head">
+        <div class="kick">Three things outside your control</div>
+        <h1>The model will <em>change</em> on you.</h1>
+      </div>
+      <div class="viz">
+        <div class="cards3">
+          <div class="mcard"><div class="ic"><svg><use href="#power" width="28" height="28"/></svg></div><div class="lb">Switched off</div></div>
+          <div class="mcard"><div class="ic"><svg><use href="#gauge" width="28" height="28"/></svg></div><div class="lb">Quality shifts</div></div>
+          <div class="mcard"><div class="ic"><svg><use href="#sync" width="28" height="28"/></svg></div><div class="lb">Cost &amp; speed changes</div></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- S2 : the danger is getting stuck -->
+  <section class="slide" data-ch="0">
+    <div class="wrap">
+      <div class="head">
+        <div class="kick">The real risk</div>
+        <h1>The danger is getting <em>stuck.</em></h1>
+      </div>
+      <div class="viz">
+        <div class="diagram" style="max-width:1000px">
+          <svg viewBox="0 0 1000 360">
+            <g transform="translate(40 48)"><rect class="box" width="252" height="58" rx="12"/><text x="22" y="35" class="t-ink" font-size="16.5">What it knows about you</text></g>
+            <g transform="translate(40 150)"><rect class="box" width="252" height="58" rx="12"/><text x="22" y="35" class="t-ink" font-size="16.5">How you work</text></g>
+            <g transform="translate(40 252)"><rect class="box" width="252" height="58" rx="12"/><text x="22" y="35" class="t-ink" font-size="16.5">Your setup</text></g>
+            <!-- feeders merge to one point, then a single longer arrow into the vault -->
+            <path class="feed" d="M292 77 C 372 92, 372 170, 440 181"/>
+            <path class="feed" d="M292 179 H440"/>
+            <path class="feed" d="M292 281 C 372 266, 372 192, 440 181"/>
+            <line class="arr" x1="440" y1="181" x2="626" y2="181"/>
+            <!-- vault -->
+            <rect x="640" y="98" width="300" height="166" rx="16" class="box"/>
+            <text x="790" y="138" text-anchor="middle" class="t-soft t-mono" font-size="12.5" letter-spacing="3">ONE COMPANY</text>
+            <g style="color:var(--accent)"><use href="#lock" x="756" y="158" width="68" height="68"/></g>
+            <text x="790" y="306" text-anchor="middle" class="t-mono t-soft" font-size="13" letter-spacing="1">shut off &nbsp;·&nbsp; repriced &nbsp;·&nbsp; out-grown</text>
+          </svg>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===================== CH 2 — RENT VS OWN ===================== -->
+
+  <!-- S3 : your setup is the part you own -->
+  <section class="slide" data-ch="1">
+    <div class="wrap">
+      <div class="head">
+        <div class="kick">What you can own</div>
+        <h1>Your setup is the part you <em>own.</em></h1>
+      </div>
+      <div class="viz">
+        <div class="col2">
+          <div>
+            <div style="border:1.7px dashed var(--rent);border-radius:16px;padding:32px 26px;text-align:center;color:var(--rent)">
+              <svg width="46" height="46" style="color:var(--rent);margin-bottom:6px"><use href="#cloud" width="46" height="46"/></svg>
+              <div style="font-size:21px;font-weight:600;color:var(--soft)">The model</div>
+              <div class="tag-r" style="margin-top:12px">RENTED</div>
+            </div>
+          </div>
+          <div style="display:flex;flex-direction:column;gap:16px">
+            <div class="filecard own">
+              <svg class="ico"><use href="#person" width="30" height="30"/></svg>
+              <div class="nm">What it knows about you</div>
+            </div>
+            <div class="filecard own">
+              <svg class="ico"><use href="#gauge" width="30" height="30"/></svg>
+              <div class="nm">How you work</div>
+            </div>
+            <div class="filecard own">
+              <svg class="ico"><use href="#key" width="30" height="30"/></svg>
+              <div class="nm">Your setup</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===================== CH 3 — WHERE IT LIVES ===================== -->
+
+  <!-- S5 : browser vs desktop -->
+  <section class="slide" data-ch="2">
+    <div class="wrap">
+      <div class="head">
+        <div class="kick">Where your setup lives</div>
+        <h1>On their computers — or <em>yours.</em></h1>
+      </div>
+      <div class="viz">
+        <div class="diagram" style="max-width:1060px">
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:38px;align-items:stretch">
+            <div style="border:1.7px dashed var(--rent);border-radius:18px;padding:28px 30px;display:flex;flex-direction:column;gap:18px">
+              <div class="t-mono" style="font-size:11.5px;letter-spacing:.24em;color:var(--rent)">THE BROWSER</div>
+              <div style="display:flex;align-items:center;gap:16px">
+                <svg width="40" height="40" style="color:var(--rent)"><use href="#cloud" width="40" height="40"/></svg>
+                <div style="font-size:20px;color:var(--soft);font-weight:600">Lives on <span style="color:var(--ink)">their</span> computers</div>
+              </div>
+              <div style="font-size:16px;color:var(--soft);line-height:1.5">Your memory, projects and chats.</div>
+              <div class="tag-r" style="align-self:flex-start;margin-top:auto">MOVING IT = COPY, ONE BY ONE</div>
+            </div>
+            <div style="border:1.8px solid color-mix(in srgb,var(--accent) 52%,transparent);border-radius:18px;padding:28px 30px;display:flex;flex-direction:column;gap:18px;background:color-mix(in srgb,var(--accent) 6%,transparent);box-shadow:0 24px 60px -38px var(--accent)">
+              <div class="t-mono" style="font-size:11.5px;letter-spacing:.24em;color:var(--accent)">THE DESKTOP AGENT</div>
+              <div style="display:flex;align-items:center;gap:16px">
+                <svg width="40" height="40" style="color:var(--accent)"><use href="#folder" width="40" height="40"/></svg>
+                <div style="font-size:20px;color:var(--ink);font-weight:600">Plain files on <span style="color:var(--accent)">your</span> computer</div>
+              </div>
+              <div style="display:flex;align-items:center;gap:18px;margin-top:2px">
+                <img class="logoplate" style="width:54px;height:54px" src="logos/cowork.png" alt="">
+                <img class="logoplate" style="width:54px;height:54px" src="logos/codex.png" alt="">
+              </div>
+              <div class="chip acc" style="align-self:flex-start;margin-top:auto"><svg width="15" height="15" style="color:var(--accent)"><use href="#key" width="15" height="15"/></svg>YOURS TO KEEP</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- S6 : bring the files -->
+  <section class="slide" data-ch="2">
+    <div class="wrap">
+      <div class="head">
+        <div class="kick">Not stuck on one laptop</div>
+        <h1>When you move, you just <em>bring the files.</em></h1>
+      </div>
+      <div class="viz">
+        <div class="diagram" style="max-width:1000px">
+          <svg viewBox="0 0 1000 372">
+            <!-- desktop agents on top -->
+            <rect x="384" y="12" width="232" height="74" rx="13" class="box-r"/>
+            <image href="logos/cowork.png" x="436" y="22" width="54" height="54"/>
+            <image href="logos/codex.png" x="510" y="22" width="54" height="54"/>
+            <line class="arr" x1="500" y1="86" x2="500" y2="120"/>
+            <!-- central folder -->
+            <rect x="388" y="124" width="224" height="86" rx="15" class="box-o"/>
+            <g style="color:var(--accent)"><use href="#folder" x="416" y="146" width="40" height="40"/></g>
+            <text x="470" y="172" class="t-ink" font-size="20" font-weight="600">Your files</text>
+            <g style="color:var(--accent)"><use href="#key" x="566" y="146" width="26" height="26"/></g>
+            <!-- sync down to laptop + team -->
+            <line class="arr" x1="470" y1="210" x2="276" y2="300"/>
+            <line class="arr" x1="530" y1="210" x2="724" y2="300"/>
+            <g transform="translate(176 300)" style="color:var(--soft)">
+              <use href="#monitor" x="0" y="0" width="56" height="56"/>
+              <text x="28" y="80" text-anchor="middle" class="t-ink" font-size="15" font-weight="600">Your laptop</text>
+            </g>
+            <g transform="translate(700 300)" style="color:var(--soft)">
+              <use href="#person" x="-20" y="0" width="52" height="52"/>
+              <use href="#person" x="22" y="0" width="52" height="52"/>
+              <text x="16" y="80" text-anchor="middle" class="t-ink" font-size="15" font-weight="600">Your team</text>
+            </g>
+          </svg>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===================== CH 4 — THREE FILES ===================== -->
+
+  <!-- S7 : organize by task -->
+  <section class="slide" data-ch="3">
+    <div class="wrap">
+      <div class="head">
+        <div class="kick">Organize by task</div>
+        <h1>Give every job its own <em>folder.</em></h1>
+      </div>
+      <div class="viz">
+        <div class="diagram" style="max-width:1000px">
+          <svg viewBox="0 0 1000 320">
+            <g transform="translate(40 44)"><rect class="box-o" width="300" height="60" rx="12"/><g style="color:var(--accent)"><use href="#folder" x="20" y="16" width="28" height="28"/></g><text x="64" y="38" class="t-ink" font-size="17">Weekly report</text></g>
+            <g transform="translate(40 130)" opacity=".5"><rect class="box" width="300" height="60" rx="12"/><g style="color:var(--soft)"><use href="#folder" x="20" y="16" width="28" height="28"/></g><text x="64" y="38" class="t-soft" font-size="17">Client follow-ups</text></g>
+            <g transform="translate(40 216)" opacity=".5"><rect class="box" width="300" height="60" rx="12"/><g style="color:var(--soft)"><use href="#folder" x="20" y="16" width="28" height="28"/></g><text x="64" y="38" class="t-soft" font-size="17">Contract reviews</text></g>
+            <line class="arr" x1="348" y1="74" x2="556" y2="150"/>
+            <rect x="568" y="34" width="392" height="252" rx="16" fill="none" stroke="var(--line)" stroke-width="1.5"/>
+            <text x="592" y="66" class="t-mono t-soft" font-size="11.5" letter-spacing="2">INSIDE EVERY FOLDER</text>
+            <g transform="translate(592 84)"><rect class="box" width="344" height="58" rx="11"/><g style="color:var(--accent)"><use href="#person" x="18" y="15" width="28" height="28"/></g><text x="58" y="28" class="t-ink" font-size="16">What it knows about you</text><text x="58" y="48" class="t-mono t-soft" font-size="14">memory.md</text></g>
+            <g transform="translate(592 152)"><rect class="box" width="344" height="58" rx="11"/><g style="color:var(--accent)"><use href="#gauge" x="18" y="15" width="28" height="28"/></g><text x="58" y="28" class="t-ink" font-size="16">How you work</text><text x="58" y="48" class="t-mono t-soft" font-size="14">SKILL.md</text></g>
+            <g transform="translate(592 220)"><rect class="box" width="344" height="58" rx="11"/><g style="color:var(--accent)"><use href="#key" x="18" y="15" width="28" height="28"/></g><text x="58" y="28" class="t-ink" font-size="16">Your setup</text><text x="58" y="48" class="t-mono t-soft" font-size="14">CLAUDE.md</text></g>
+          </svg>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- the easy button — import between desktop agents -->
+  <section class="slide" data-ch="3">
+    <div class="wrap">
+      <div class="head">
+        <div class="kick">The easy button</div>
+        <h1>Switching <em>desktop agents.</em></h1>
+      </div>
+      <div class="viz">
+        <div style="display:flex;flex-direction:column;align-items:center;gap:34px">
+          <div style="display:flex;align-items:center;gap:40px">
+            <div style="text-align:center"><img class="logoplate" style="width:96px;height:96px" src="logos/cowork.png" alt=""></div>
+            <svg width="104" height="26" viewBox="0 0 104 26" style="overflow:visible">
+              <line x1="2" y1="13" x2="86" y2="13" stroke="var(--accent)" stroke-width="2.6" stroke-linecap="round"/>
+              <path d="M75 5 L87 13 L75 21" fill="none" stroke="var(--accent)" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+            <div style="text-align:center"><img class="logoplate" style="width:96px;height:96px" src="logos/codex.png" alt=""></div>
+          </div>
+          <div class="chip acc" style="font-size:15px;padding:13px 22px">General &nbsp;→&nbsp; Imported agent setup</div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- FILE 1 — memory pull prompt -->
+  <section class="slide" data-ch="3">
+    <div class="wrap">
+      <div class="head">
+        <div class="kick">File 1 · What it knows about you</div>
+        <h1>Pull your memory <em>out</em> of the AI.</h1>
+      </div>
+      <div class="viz" style="align-items:center">
+        <div class="prompt">
+          I'm moving to a new AI tool. <span class="hl">Write out everything you know about me and how I work</span> when it comes to <span class="v">[this task]</span> — my preferences, my style, and anything you've picked up from past conversations. <span class="hl">Put it all in one block so I can copy it.</span>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- S10 : FILE 2 — skills / open standard -->
+  <section class="slide" data-ch="3">
+    <div class="wrap">
+      <div class="head">
+        <div class="kick">File 2 · How you do your work</div>
+        <h1>Write the process down <em>once.</em></h1>
+      </div>
+      <div class="viz">
+        <div class="diagram" style="max-width:980px">
+          <svg viewBox="0 0 980 360">
+            <text x="470" y="40" text-anchor="middle" class="t-acc t-mono" font-size="15" letter-spacing="3">OPEN STANDARD</text>
+            <!-- skill file -->
+            <rect x="60" y="118" width="240" height="124" rx="15" class="box-o"/>
+            <g style="color:var(--accent)"><use href="#file" x="92" y="150" width="44" height="44"/></g>
+            <text x="150" y="172" class="t-ink" font-size="20" font-weight="600">A skill</text>
+            <text x="150" y="198" class="t-mono t-soft" font-size="14">SKILL.md</text>
+            <!-- arrows to logos -->
+            <line class="arr" x1="312" y1="180" x2="700" y2="92"/>
+            <line class="arr" x1="312" y1="180" x2="700" y2="180"/>
+            <line class="arr" x1="312" y1="180" x2="700" y2="268"/>
+            <image href="logos/claude.png" x="712" y="62" width="64" height="64"/>
+            <image href="logos/chatgpt.png" x="712" y="148" width="64" height="64"/>
+            <image href="logos/gemini.png" x="712" y="236" width="64" height="64"/>
+          </svg>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- S11 : FILE 3 — rules file -->
+  <section class="slide" data-ch="3">
+    <div class="wrap">
+      <div class="head">
+        <div class="kick">File 3 · How you've taught it to behave</div>
+        <h1>House rules that <em>travel</em> with you.</h1>
+      </div>
+      <div class="viz">
+        <div style="width:100%;max-width:640px">
+          <div style="display:flex;gap:8px;align-items:flex-end;margin-bottom:-1px;position:relative;z-index:2">
+            <div style="font-family:var(--mono);font-size:13px;padding:9px 17px;border-radius:10px 10px 0 0;background:color-mix(in srgb,var(--accent) 14%,transparent);border:1px solid color-mix(in srgb,var(--accent) 50%,transparent);border-bottom:none;color:var(--ink)">CLAUDE.md</div>
+            <div style="font-family:var(--mono);font-size:13px;padding:9px 17px;border-radius:10px 10px 0 0;background:transparent;border:1px solid var(--line);border-bottom:none;color:var(--dim)">AGENTS.md</div>
+            <div class="chip acc" style="margin-left:auto;font-size:12px;padding:7px 14px">UNDER 100 LINES</div>
+          </div>
+          <div style="border:1px solid var(--line);border-top:1px solid color-mix(in srgb,var(--accent) 40%,transparent);border-radius:0 12px 12px 12px;padding:28px 30px;background:var(--panel);display:flex;flex-direction:column;gap:18px">
+            <div style="display:flex;align-items:baseline;gap:18px"><span style="font-family:var(--mono);font-size:12px;color:var(--accent);letter-spacing:1px;flex:0 0 92px">PURPOSE</span><span style="font-size:18px;color:var(--ink)">what this work is for</span></div>
+            <div style="display:flex;align-items:baseline;gap:18px"><span style="font-family:var(--mono);font-size:12px;color:var(--accent);letter-spacing:1px;flex:0 0 92px">STYLE</span><span style="font-size:18px;color:var(--ink)">how you like it done</span></div>
+            <div style="display:flex;align-items:baseline;gap:18px"><span style="font-family:var(--mono);font-size:12px;color:var(--accent);letter-spacing:1px;flex:0 0 92px">→ MAP</span><span style="font-size:18px;color:var(--ink)">see map.md for the layout</span></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===================== CH 5 — FOR TEAMS ===================== -->
+
+  <!-- S12 : company -->
+  <section class="slide" data-ch="4">
+    <div class="wrap">
+      <div class="head">
+        <div class="kick">The same rule — for a company</div>
+        <h1>Your company's brain, in files <em>you own.</em></h1>
+      </div>
+      <div class="viz">
+        <div class="diagram" style="max-width:1000px">
+          <svg viewBox="0 0 1000 350">
+            <rect x="368" y="14" width="264" height="74" rx="13" class="box-r"/>
+            <image href="logos/cowork.png" x="438" y="24" width="54" height="54"/>
+            <image href="logos/codex.png" x="510" y="24" width="54" height="54"/>
+            <line class="arr" x1="500" y1="88" x2="500" y2="120"/>
+            <rect x="360" y="124" width="280" height="92" rx="15" class="box-o"/>
+            <g style="color:var(--accent)"><use href="#folder" x="386" y="146" width="40" height="40"/></g>
+            <text x="438" y="162" class="t-ink" font-size="20" font-weight="600">Company drive</text>
+            <text x="438" y="186" class="t-soft t-mono" font-size="12.5">SharePoint · Google Drive</text>
+            <g style="color:var(--accent)"><use href="#key" x="590" y="146" width="26" height="26"/></g>
+            <line class="arr" x1="430" y1="216" x2="196" y2="300"/>
+            <line class="arr" x1="500" y1="216" x2="500" y2="300"/>
+            <line class="arr" x1="570" y1="216" x2="804" y2="300"/>
+            <g transform="translate(150 300)" style="color:var(--soft)"><use href="#person" width="50" height="50"/></g>
+            <g transform="translate(475 300)" style="color:var(--soft)"><use href="#person" width="50" height="50"/></g>
+            <g transform="translate(780 300)" style="color:var(--soft)"><use href="#person" width="50" height="50"/></g>
+          </svg>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===================== CH 6 — STAY FREE ===================== -->
+
+  <!-- S13 : pick one, go deep -->
+  <section class="slide" data-ch="5">
+    <div class="wrap">
+      <div class="head">
+        <div class="kick">One warning before you run off</div>
+        <h1>Pick one and go <em>deep.</em></h1>
+      </div>
+      <div class="viz">
+        <div class="diagram" style="max-width:1020px">
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:44px;align-items:center">
+            <div style="border:1.7px dashed var(--rent);border-radius:18px;padding:26px 28px;min-height:214px;position:relative">
+              <div class="t-mono" style="font-size:11px;letter-spacing:.22em;color:var(--rent);margin-bottom:14px">TOOL-HOPPING EVERY WEEK</div>
+              <svg viewBox="0 0 360 130" style="width:100%;height:auto;overflow:visible">
+                <g style="color:var(--rent)">
+                  <rect x="6" y="40" width="56" height="44" rx="9" class="box-r"/>
+                  <rect x="92" y="14" width="56" height="44" rx="9" class="box-r"/>
+                  <rect x="178" y="64" width="56" height="44" rx="9" class="box-r"/>
+                  <rect x="264" y="20" width="56" height="44" rx="9" class="box-r"/>
+                </g>
+                <path class="con-d" d="M62 62 C 80 40, 80 40, 100 40"/>
+                <path class="con-d" d="M148 40 C 168 60, 168 60, 188 80"/>
+                <path class="con-d" d="M234 84 C 258 56, 258 56, 280 46"/>
+              </svg>
+              <div class="tag-r" style="position:absolute;bottom:24px;left:28px">SHALLOW · SLOW</div>
+            </div>
+            <div style="border:1.8px solid color-mix(in srgb,var(--accent) 52%,transparent);border-radius:18px;padding:26px 28px;min-height:214px;background:color-mix(in srgb,var(--accent) 6%,transparent);box-shadow:0 24px 60px -40px var(--accent);position:relative">
+              <div class="t-mono" style="font-size:11px;letter-spacing:.22em;color:var(--accent);margin-bottom:14px">ONE MAIN TOOL</div>
+              <svg viewBox="0 0 360 130" style="width:100%;height:auto;overflow:visible">
+                <rect x="152" y="8" width="56" height="44" rx="9" class="box-o"/>
+                <line class="arr" x1="180" y1="52" x2="180" y2="116"/>
+                <text x="232" y="92" class="t-soft" font-size="13" font-family="var(--mono)">go deep</text>
+              </svg>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- S14 : recap -->
+  <section class="slide" data-ch="5">
+    <div class="wrap" style="justify-content:center">
+      <div class="head">
+        <div class="kick">The whole thing in one line</div>
+        <h1 class="big">Rent the model. <em>Own</em> your setup.</h1>
+      </div>
+      <div class="recap">
+        <div class="fade up" data-s="1">
+          <div style="font-size:19px;color:var(--soft);margin-bottom:20px">Your setup is <em style="color:var(--accent);font-style:normal;font-weight:600">yours</em>:</div>
+          <div style="display:flex;flex-direction:column;gap:16px">
+            <div style="display:flex;align-items:center;gap:18px"><span style="font-size:22px;font-weight:600;color:var(--accent);min-width:230px">What it knows</span><span style="color:var(--dim);font-size:20px">→</span><span style="font-family:var(--mono);font-size:17px;color:var(--ink)">memory</span></div>
+            <div style="display:flex;align-items:center;gap:18px"><span style="font-size:22px;font-weight:600;color:var(--accent);min-width:230px">How you work</span><span style="color:var(--dim);font-size:20px">→</span><span style="font-family:var(--mono);font-size:17px;color:var(--ink)">skills</span></div>
+            <div style="display:flex;align-items:center;gap:18px"><span style="font-size:22px;font-weight:600;color:var(--accent);min-width:230px">Your setup</span><span style="color:var(--dim);font-size:20px">→</span><span style="font-family:var(--mono);font-size:17px;color:var(--ink)">instructions</span></div>
+          </div>
+        </div>
+        <div class="rrow fade up" data-s="2" style="margin-top:28px">
+          <svg class="ic"><use href="#folder" width="26" height="26"/></svg>
+          <div class="tx">Keep it in <b>files you own.</b></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+</div>
+
+<script>
+(function(){
+  const ACC=['#E2553F','#D7A33E','#5598E6','#3FB58C','#9B7BE8','#3FBFCB'];
+  const stage=document.getElementById('stage');
+  const slides=[...document.querySelectorAll('.slide')];
+  const rail=document.getElementById('rail');
+  const lis=[...rail.querySelectorAll('li')];
+  const counter=document.getElementById('counter');
+  let cur=0, step=0;
+
+  // draw clean arrowheads on every <line class="arr"> based on its direction
+  (function drawArrows(){
+    const ns='http://www.w3.org/2000/svg';
+    document.querySelectorAll('svg line.arr').forEach(l=>{
+      const x1=+l.getAttribute('x1'), y1=+l.getAttribute('y1'),
+            x2=+l.getAttribute('x2'), y2=+l.getAttribute('y2');
+      const ang=Math.atan2(y2-y1,x2-x1), L=14, a=0.46;
+      const p1x=x2-L*Math.cos(ang-a), p1y=y2-L*Math.sin(ang-a);
+      const p2x=x2-L*Math.cos(ang+a), p2y=y2-L*Math.sin(ang+a);
+      const head=document.createElementNS(ns,'path');
+      head.setAttribute('d',`M${p1x.toFixed(1)} ${p1y.toFixed(1)} L${x2} ${y2} L${p2x.toFixed(1)} ${p2y.toFixed(1)}`);
+      head.setAttribute('class','arrhead');
+      l.parentNode.appendChild(head);
+    });
+  })();
+
+  function sizeStage(){
+    const vw=innerWidth, vh=innerHeight;
+    const W=Math.max(1200,Math.min(1640,Math.round(720*vw/vh)));
+    stage.style.width=W+'px';
+    const s=Math.min(vw/W, vh/720);
+    stage.style.transform=`translate(-50%,-50%) scale(${s})`;
+  }
+  addEventListener('resize',sizeStage); sizeStage();
+
+  function maxStep(sl){
+    const f=[...sl.querySelectorAll('.fade')];
+    return f.length?Math.max(...f.map(e=>+e.dataset.s||1)):0;
+  }
+  function applyReveal(sl){
+    sl.querySelectorAll('.fade').forEach(e=>e.classList.toggle('in',(+e.dataset.s||1)<=step));
+  }
+  function paint(){
+    const ch=+slides[cur].dataset.ch, c=ACC[ch];
+    stage.style.setProperty('--accent',c);
+    document.documentElement.style.setProperty('--accent',c);
+    rail.style.setProperty('--accent',c);
+    slides.forEach((s,i)=>s.classList.toggle('on',i===cur));
+    lis.forEach((li,i)=>{li.classList.toggle('on',i===ch);li.classList.toggle('done',i<ch);});
+    counter.innerHTML=`<b>${String(cur+1).padStart(2,'0')}</b> / ${String(slides.length).padStart(2,'0')}`;
+  }
+  function enter(full){
+    step = full ? maxStep(slides[cur]) : 0;
+    paint(); applyReveal(slides[cur]);
+  }
+  function go(d){
+    const sl=slides[cur];
+    if(d>0){
+      if(step<maxStep(sl)){step++;applyReveal(sl);return;}
+      if(cur<slides.length-1){cur++;enter(false);}
+    }else{
+      if(step>0){step--;applyReveal(sl);return;}
+      if(cur>0){cur--;enter(true);}
+    }
+  }
+  addEventListener('keydown',e=>{
+    if(e.key==='ArrowRight'||e.key==='PageDown'||e.key===' '){e.preventDefault();go(1);}
+    else if(e.key==='ArrowLeft'||e.key==='PageUp'){e.preventDefault();go(-1);}
+    else if(e.key==='Home'){e.preventDefault();cur=0;enter(false);}
+    else if(e.key==='End'){e.preventDefault();cur=slides.length-1;enter(true);}
+  });
+  lis.forEach(li=>li.addEventListener('click',()=>{
+    const t=+li.dataset.ch, idx=slides.findIndex(s=>+s.dataset.ch===t);
+    if(idx>=0){cur=idx;enter(false);}
+  }));
+  function jump(){
+    const m=/^#s(\d+)(?:\.(\d+))?$/.exec(location.hash);
+    if(!m)return;
+    cur=Math.min(slides.length-1,Math.max(0,+m[1]-1));
+    enter(m[2]===undefined);
+    if(m[2]!==undefined){step=Math.min(maxStep(slides[cur]),+m[2]);applyReveal(slides[cur]);}
+  }
+  addEventListener('hashchange',jump);
+  if(location.hash) jump(); else enter(false);
+})();
+</script>
+</body>
+</html>
